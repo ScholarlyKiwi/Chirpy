@@ -17,6 +17,9 @@ type apiConfig struct {
 	dbq            *database.Queries
 }
 
+const filepathRoot = "."
+const port = "8080"
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -37,18 +40,11 @@ func main() {
 	}
 
 	var apiCfg apiConfig
-	const filepathRoot = "."
-	const port = "8080"
 	apiCfg.dbq = database.New(db)
 
 	serveMux := http.NewServeMux()
 
-	serveMux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
-	serveMux.HandleFunc("GET /api/healthz", readinessHandler)
-	serveMux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
-	serveMux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
-	serveMux.HandleFunc("POST /api/users", apiCfg.emailHandler)
-	serveMux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
+	apiCfg.assignHandlers(serveMux)
 
 	server := http.Server{
 		Handler: serveMux,
@@ -58,4 +54,16 @@ func main() {
 	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
 	log.Fatal(server.ListenAndServe())
 
+}
+
+func (apiCfg *apiConfig) assignHandlers(serveMux *http.ServeMux) {
+	serveMux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
+	serveMux.HandleFunc("GET /api/healthz", readinessHandler)
+	serveMux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
+	serveMux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
+	serveMux.HandleFunc("POST /api/users", apiCfg.emailHandler)
+	serveMux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
+	serveMux.HandleFunc("GET /api/chirps", apiCfg.getChirpHandler)
+	serveMux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.getChirpByIDHandler)
+	serveMux.HandleFunc("POST /api/login", apiCfg.loginHandler)
 }

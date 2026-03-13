@@ -7,12 +7,10 @@ import (
 
 	"time"
 
+	"github.com/ScholarlyKiwi/Chirpy/internal/auth"
+	"github.com/ScholarlyKiwi/Chirpy/internal/database"
 	"github.com/google/uuid"
 )
-
-type jsonEmailBody struct {
-	Email string `json:"email"`
-}
 
 type jsonUser struct {
 	ID        uuid.UUID `json:"id"`
@@ -28,7 +26,7 @@ func (cfg *apiConfig) emailHandler(respWriter http.ResponseWriter, req *http.Req
 		respBody = jsonError{Error: "Invalid request method"}
 		respStatus = http.StatusMethodNotAllowed
 	} else {
-		var reqBody jsonEmailBody
+		var reqBody jsonLoginBody
 		decoder := json.NewDecoder(req.Body)
 		err := decoder.Decode(&reqBody)
 		if err != nil {
@@ -37,19 +35,32 @@ func (cfg *apiConfig) emailHandler(respWriter http.ResponseWriter, req *http.Req
 		} else if len(reqBody.Email) < 3 {
 			respBody = jsonError{Error: "Email Address is required"}
 			respStatus = http.StatusBadRequest
+		} else if len(reqBody.Password) < 1 {
+			respBody = jsonError{Error: "Password is required"}
+			respStatus = http.StatusBadRequest
 		} else {
-			user, err := cfg.dbq.CreateUser(req.Context(), reqBody.Email)
-
+			hashed_password, err := auth.HashPassword(reqBody.Password)
 			if err != nil {
-				respBody = jsonError{Error: fmt.Sprintf("Unable to create User: %v", err)}
+				respBody = jsonError{Error: fmt.Sprintf("Error hashing password: %v", err)}
 				respStatus = http.StatusBadRequest
+			} else {
+
+				user, err := cfg.dbq.CreateUser(req.Context(), database.CreateUserParams{
+					Email:          reqBody.Email,
+					HashedPassword: hashed_password,
+				})
+				if err != nil {
+					respBody = jsonError{Error: fmt.Sprintf("Unable to create User: %v", err)}
+					respStatus = http.StatusBadRequest
+				} else {
+					respBody = jsonUser{
+						ID:        user.ID,
+						CreatedAt: user.CreatedAt,
+						UpdatedAt: user.UpdateAt,
+						Email:     user.Email}
+					respStatus = http.StatusCreated
+				}
 			}
-			respBody = jsonUser{
-				ID:        user.ID,
-				CreatedAt: user.CreatedAt,
-				UpdatedAt: user.UpdateAt,
-				Email:     user.Email}
-			respStatus = http.StatusCreated
 		}
 	}
 

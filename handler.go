@@ -28,6 +28,9 @@ func (cfg *apiConfig) metricsHandler(respWriter http.ResponseWriter, req *http.R
 
 func (cfg *apiConfig) resetHandler(respWriter http.ResponseWriter, req *http.Request) {
 	cfg.fileserverHits.Store(0)
+
+	cfg.dbq.DeleteUsers(req.Context())
+
 	respWriter.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	respWriter.WriteHeader(http.StatusOK)
 	_, err := respWriter.Write([]byte("File Server Hits Reset"))

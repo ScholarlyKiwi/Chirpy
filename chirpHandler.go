@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/ScholarlyKiwi/Chirpy/internal/database"
 	"github.com/google/uuid"
@@ -13,14 +12,6 @@ import (
 type jsonCreateChirp struct {
 	Body    string    `json:"body"`
 	User_id uuid.UUID `json:"user_id"`
-}
-
-type jsonChirp struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Body      string    `json:"body"`
-	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (cfg *apiConfig) chirpHandler(respWriter http.ResponseWriter, req *http.Request) {
@@ -40,7 +31,7 @@ func (cfg *apiConfig) chirpHandler(respWriter http.ResponseWriter, req *http.Req
 			respStatus = http.StatusBadRequest
 		}
 
-		user, err := cfg.dbq.GetUser(req.Context(), reqBody.User_id)
+		user, err := cfg.dbq.GetUserByID(req.Context(), reqBody.User_id)
 		if err != nil {
 			respBody = jsonError{Error: "Unable to retrieve user."}
 			respStatus = http.StatusBadRequest
