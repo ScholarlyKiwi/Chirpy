@@ -17,6 +17,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbq            *database.Queries
 	tokenSecret    string
+	polkaKey       string
 }
 
 const filepathRoot = "."
@@ -60,6 +61,7 @@ func (apiCfg *apiConfig) assignHandlers(serveMux *http.ServeMux) {
 	serveMux.HandleFunc("POST /api/revoke", apiCfg.revokeHandler)
 	serveMux.HandleFunc("PUT /api/users", apiCfg.putUserHandler)
 	serveMux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.deleteChirpHandler)
+	serveMux.HandleFunc("POST /api/polka/webhooks", apiCfg.webhooksHandler)
 }
 
 func getConfig(cfg *apiConfig) error {
@@ -70,18 +72,23 @@ func getConfig(cfg *apiConfig) error {
 	if !ok || dbURL == "" {
 		return fmt.Errorf("Missing env DB_URL")
 	}
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return fmt.Errorf("Error accessing database: %v", err)
+	}
+	cfg.dbq = database.New(db)
+
 	severToken, ok := os.LookupEnv("SECRET")
 	if !ok || severToken == "" {
 		return fmt.Errorf("Missing env SECRET")
 	}
-
-	db, err := sql.Open("postgres", dbURL)
-
-	if err != nil {
-		return fmt.Errorf("Error accessing database: %v", err)
-	}
-
-	cfg.dbq = database.New(db)
 	cfg.tokenSecret = severToken
+
+	polkaKey, ok := os.LookupEnv("POLKAKEY")
+	if !ok || polkaKey == "" {
+		return fmt.Errorf("Missing env POLKAKEY")
+	}
+	cfg.polkaKey = polkaKey
+
 	return nil
 }

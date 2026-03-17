@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ScholarlyKiwi/Chirpy/internal/auth"
 	"github.com/ScholarlyKiwi/Chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -17,12 +16,12 @@ type jsonCreateChirp struct {
 
 func (cfg *apiConfig) chirpHandler(respWriter http.ResponseWriter, req *http.Request) {
 
-	respBody, respStatus := cfg.processChirpRequest(req)
+	respBody, respStatus := cfg.processChirpCreate(req)
 
 	jsonHtttpSend(respStatus, respBody, respWriter)
 }
 
-func (cfg *apiConfig) processChirpRequest(req *http.Request) (respBody any, respStatus int) {
+func (cfg *apiConfig) processChirpCreate(req *http.Request) (respBody any, respStatus int) {
 	if req.Method != http.MethodPost {
 		respBody = jsonError{Error: "Invalid request method"}
 		respStatus = http.StatusMethodNotAllowed
@@ -39,24 +38,8 @@ func (cfg *apiConfig) processChirpRequest(req *http.Request) (respBody any, resp
 		return respBody, respStatus
 	}
 
-	token, err := auth.GetBearerToken(req.Header)
+	respBody, respStatus, userRecord, err := cfg.CheckAuthorizationToken(req)
 	if err != nil {
-		respBody = jsonError{Error: "Unable to retrieve user token."}
-		respStatus = http.StatusBadRequest
-		return respBody, respStatus
-	}
-
-	uuid, err := auth.ValidateJWT(token, cfg.tokenSecret)
-	if err != nil {
-		respBody = jsonError{Error: fmt.Sprintf("Invalid user token: %v", err)}
-		respStatus = http.StatusUnauthorized
-		return respBody, respStatus
-	}
-
-	user, err := cfg.dbq.GetUserByID(req.Context(), uuid)
-	if err != nil {
-		respBody = jsonError{Error: fmt.Sprintf("Unable to retrieve user %v.", reqBody.User_id)}
-		respStatus = http.StatusBadRequest
 		return respBody, respStatus
 	}
 
@@ -64,7 +47,7 @@ func (cfg *apiConfig) processChirpRequest(req *http.Request) (respBody any, resp
 	if ok {
 		createdChrip, err := cfg.dbq.CreateChirp(req.Context(), database.CreateChirpParams{
 			Body:   cleanedBody,
-			UserID: user.ID,
+			UserID: userRecord.ID,
 		},
 		)
 		if err != nil {

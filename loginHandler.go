@@ -99,7 +99,8 @@ func (cfg *apiConfig) login(req *http.Request) (any, int) {
 		UpdatedAt:    user.UpdatedAt,
 		Email:        user.Email,
 		Token:        tokenString,
-		RefershToken: refreshString}
+		RefershToken: refreshString,
+		IsChirpRed:   user.IsChirpyRed}
 	respStatus = http.StatusOK
 
 	return respBody, respStatus

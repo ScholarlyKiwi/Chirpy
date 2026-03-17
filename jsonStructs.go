@@ -31,6 +31,7 @@ type jsonUser struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token"`
 	RefershToken string    `json:"refresh_token"`
+	IsChirpRed   bool      `json:"is_chirpy_red"`
 }
 
 type jsonToken struct {
@@ -40,4 +41,13 @@ type jsonToken struct {
 type jsonNewUser struct {
 	Password string `json:"password"`
 	Email    string `json:"email"`
+}
+
+type jsonWebhookData struct {
+	UserID string `json:"user_id"`
+}
+
+type jsonWebhook struct {
+	Event string          `json:"event"`
+	Data  jsonWebhookData `json:"data"`
 }

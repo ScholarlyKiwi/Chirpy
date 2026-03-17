@@ -121,7 +121,7 @@ type GetUserByRefreshTokenRow struct {
 	UpdatedAt      time.Time
 	Email          string
 	HashedPassword string
-	IsChirpyRed    sql.NullBool
+	IsChirpyRed    bool
 }
 
 func (q *Queries) GetUserByRefreshToken(ctx context.Context, token string) (GetUserByRefreshTokenRow, error) {

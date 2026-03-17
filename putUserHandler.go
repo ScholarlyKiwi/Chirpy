@@ -66,11 +66,12 @@ func (cfg *apiConfig) putUser(req *http.Request) (respBody any, respStatus int) 
 	}
 
 	respBody = jsonUser{
-		ID:        updatedUser.ID,
-		CreatedAt: updatedUser.CreatedAt,
-		UpdatedAt: updatedUser.UpdatedAt,
-		Email:     updatedUser.Email,
-		Token:     bearer_token,
+		ID:         updatedUser.ID,
+		CreatedAt:  updatedUser.CreatedAt,
+		UpdatedAt:  updatedUser.UpdatedAt,
+		Email:      updatedUser.Email,
+		Token:      bearer_token,
+		IsChirpRed: updatedUser.IsChirpyRed,
 	}
 	respStatus = http.StatusOK
 

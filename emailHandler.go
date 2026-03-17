@@ -44,10 +44,11 @@ func (cfg *apiConfig) emailHandler(respWriter http.ResponseWriter, req *http.Req
 					respStatus = http.StatusBadRequest
 				} else {
 					respBody = jsonUser{
-						ID:        user.ID,
-						CreatedAt: user.CreatedAt,
-						UpdatedAt: user.UpdatedAt,
-						Email:     user.Email}
+						ID:         user.ID,
+						CreatedAt:  user.CreatedAt,
+						UpdatedAt:  user.UpdatedAt,
+						Email:      user.Email,
+						IsChirpRed: user.IsChirpyRed}
 					respStatus = http.StatusCreated
 				}
 			}
