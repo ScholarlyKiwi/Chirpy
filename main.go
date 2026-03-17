@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,32 +16,21 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbq            *database.Queries
+	tokenSecret    string
 }
 
 const filepathRoot = "."
 const port = "8080"
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading env: %v", err)
-	}
-
-	log.Default()
-	dbURL, ok := os.LookupEnv("DB_URL")
-	if !ok || dbURL == "" {
-		log.Fatalf("Missing DB_URL")
-		return
-	}
-	db, err := sql.Open("postgres", dbURL)
-
-	if err != nil {
-		log.Fatalf("Error accessing database: %v", err)
-		return
-	}
 
 	var apiCfg apiConfig
-	apiCfg.dbq = database.New(db)
+
+	err := getConfig(&apiCfg)
+	if err != nil {
+		log.Fatalf("Error loading env: %v", err)
+		return
+	}
 
 	serveMux := http.NewServeMux()
 
@@ -66,4 +56,32 @@ func (apiCfg *apiConfig) assignHandlers(serveMux *http.ServeMux) {
 	serveMux.HandleFunc("GET /api/chirps", apiCfg.getChirpHandler)
 	serveMux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.getChirpByIDHandler)
 	serveMux.HandleFunc("POST /api/login", apiCfg.loginHandler)
+	serveMux.HandleFunc("POST /api/refresh", apiCfg.refreshHandler)
+	serveMux.HandleFunc("POST /api/revoke", apiCfg.revokeHandler)
+	serveMux.HandleFunc("PUT /api/users", apiCfg.putUserHandler)
+	serveMux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.deleteChirpHandler)
+}
+
+func getConfig(cfg *apiConfig) error {
+	err := godotenv.Load()
+
+	log.Default()
+	dbURL, ok := os.LookupEnv("DB_URL")
+	if !ok || dbURL == "" {
+		return fmt.Errorf("Missing env DB_URL")
+	}
+	severToken, ok := os.LookupEnv("SECRET")
+	if !ok || severToken == "" {
+		return fmt.Errorf("Missing env SECRET")
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+
+	if err != nil {
+		return fmt.Errorf("Error accessing database: %v", err)
+	}
+
+	cfg.dbq = database.New(db)
+	cfg.tokenSecret = severToken
+	return nil
 }

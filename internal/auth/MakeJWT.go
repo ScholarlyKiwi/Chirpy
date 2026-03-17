@@ -8,7 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
+	expiresIn, _ := time.ParseDuration("1h")
 
 	claims := &jwt.RegisteredClaims{
 		Issuer:    "chirpy-access",

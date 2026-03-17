@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -13,11 +12,6 @@ func TestJWT(t *testing.T) {
 		tokenSecret string
 	}
 
-	duration, err := time.ParseDuration("1h")
-	if err != nil {
-		t.Errorf("Error parsing duration %v", err)
-		return
-	}
 	testCases := []testCase{
 		{
 			tokenSecret: "T0psecret!",
@@ -33,7 +27,7 @@ func TestJWT(t *testing.T) {
 	for idx := range testCases {
 		id, _ := uuid.NewUUID()
 		secret := testCases[idx].tokenSecret
-		tokenString, err := MakeJWT(id, secret, duration)
+		tokenString, err := MakeJWT(id, secret)
 		if err != nil {
 			t.Error(err.Error())
 			continue
@@ -49,6 +43,41 @@ func TestJWT(t *testing.T) {
 	}
 }
 
+func TestJWTRepeating(t *testing.T) {
+
+	id, _ := uuid.NewUUID()
+	secret := "Secret"
+	tokenString, _ := MakeJWT(id, secret)
+	time.Sleep(2 * time.Second)
+	tokenString2, _ := MakeJWT(id, secret)
+
+	if tokenString == tokenString2 {
+		t.Error("Epecting tokens to be different")
+	}
+}
+
+func TestDecodeJWT(t *testing.T) {
+	id, _ := uuid.NewUUID()
+	secret := "Secret"
+	tokenString, err := MakeJWT(id, secret)
+	if err != nil {
+		t.Error(err)
+	}
+	decodedJWT, claims, err := DecodeJWT(tokenString, secret)
+	if err != nil {
+		t.Error(err)
+	}
+	if !decodedJWT.Valid {
+		t.Error("DecodeJWT returned invalid flag")
+	}
+	subject, err := claims.GetSubject()
+	if subject != id.String() {
+		t.Error("DecodeJWT ID mismatch from claims")
+	}
+
+}
+
+/*  Test inavlid as MakeJWT no longer takes an ExpiresIn value.
 func TestJWTExpires(t *testing.T) {
 	type testCase struct {
 		tokenSecret string
@@ -95,3 +124,4 @@ func TestJWTExpires(t *testing.T) {
 
 	}
 }
+*/

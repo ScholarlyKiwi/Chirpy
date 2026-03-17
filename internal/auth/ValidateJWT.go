@@ -22,9 +22,17 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	if err != nil {
 		return id, fmt.Errorf("Error getting id: %v", err)
 	}
+
+	expireAt := claims.ExpiresAt.Time
+
+	if time.Now().After(expireAt) {
+		return id, fmt.Errorf("Token Expired.")
+	}
+
 	id, err = uuid.Parse(subject)
 	if err != nil {
 		return id, fmt.Errorf("Error parsing id: %v", err)
 	}
+
 	return id, nil
 }

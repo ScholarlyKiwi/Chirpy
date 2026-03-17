@@ -5,19 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"time"
-
 	"github.com/ScholarlyKiwi/Chirpy/internal/auth"
 	"github.com/ScholarlyKiwi/Chirpy/internal/database"
-	"github.com/google/uuid"
 )
-
-type jsonUser struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-}
 
 func (cfg *apiConfig) emailHandler(respWriter http.ResponseWriter, req *http.Request) {
 	var respBody any
@@ -56,7 +46,7 @@ func (cfg *apiConfig) emailHandler(respWriter http.ResponseWriter, req *http.Req
 					respBody = jsonUser{
 						ID:        user.ID,
 						CreatedAt: user.CreatedAt,
-						UpdatedAt: user.UpdateAt,
+						UpdatedAt: user.UpdatedAt,
 						Email:     user.Email}
 					respStatus = http.StatusCreated
 				}

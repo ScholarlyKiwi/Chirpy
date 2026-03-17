@@ -30,3 +30,7 @@ SELECT *
   FROM chirp
  WHERE id = $1
  ORDER BY created_at;
+
+-- name: DeleteChirpByID :exec
+DELETE FROM chirp
+ WHERE id = $1;
